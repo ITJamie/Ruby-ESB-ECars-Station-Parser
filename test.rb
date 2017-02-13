@@ -7,17 +7,39 @@ require 'uri'
 require "awesome_print"
 require "json"
 require 'active_support/all'
+require 'time'
+
 
 debugenabled=false
+repeatloop=10
+currentloop=0
 
-uri = URI.parse("http://esb.ie/electric-cars/kml/charging-locations.kml")
-response = Net::HTTP.get_response(uri)
+while currentloop < repeatloop
+	ap "loop #{currentloop} of upto #{repeatloop}"
+	uri = URI.parse("http://esb.ie/electric-cars/kml/charging-locations.kml")
+	response = Net::HTTP.get_response(uri)
 
 
-ap 'Response code from esb kml: '+response.code
+	ap 'Response code from esb kml: '+response.code
+	ap 'KML was created: '+response['last-modified']
+
+
+	temptimestamp=Time.parse(response['last-modified']).to_i
+	ap 'temptimestamp '+temptimestamp.to_s
+	currenttimestamp=Time.now.to_i
+	ap 'currenttimestamp '+currenttimestamp.to_s
+	timedifference= currenttimestamp - temptimestamp
+	ap 'timedifference '+timedifference.to_s
+	if (timedifference > 300)
+		ap 'time difference is bigger than 5 minutes'
+	else
+		ap 'time difference is less than 5 minutes'
+		break
+	end
+	currentloop+1
+end
+
 abort('response was not as expected') if (response.code.to_str != "200")
-	
-
 
 styleHash=Hash.from_xml(response.body)['kml']['Document']['Style']
 placemarksHash=Hash.from_xml(response.body)['kml']['Document']['Placemark']
@@ -101,6 +123,6 @@ end
 
 print "\ngot to end\n"
 
-ap CleanArrayOfLocations
+#ap CleanArrayOfLocations
 
 
